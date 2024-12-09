@@ -14,7 +14,7 @@ This will allow you to run the project locally.
 ```bash
 mkdir infra_calc
 cd infra_calc
-git clone https://github.com/hunterhines34/infrastructure_calc.git . // Clone the repository into the current directory
+git clone https://github.com/hunterhines34/infra_calc.git . // Clone the repository into the current directory
 ```
 
 ### 2. Create a Virtual Environment
