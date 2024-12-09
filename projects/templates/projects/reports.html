@@ -18,6 +18,8 @@
         margin-bottom: 1rem;
     }
 </style>
+<!-- Add ApexCharts CSS -->
+<link href="https://cdn.jsdelivr.net/npm/apexcharts@3.41.0/dist/apexcharts.min.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -62,7 +64,14 @@
             <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div class="p-6">
                     <h3 class="text-lg font-semibold text-gray-900">Monthly Cost Trends</h3>
-                    <div id="monthlyTrendsChart" class="h-80"></div>
+                    <div id="monthlyTrendsChart" class="h-80">
+                        {% if debug %}
+                        <pre>
+                            Labels: {{ monthly_costs_labels|safe }}
+                            Data: {{ monthly_costs_data|safe }}
+                        </pre>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -143,125 +152,153 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Load ApexCharts without integrity check -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
+console.log('ApexCharts script loaded:', typeof ApexCharts !== 'undefined');
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Monthly Cost Trends - Area Chart
-    const monthlyTrends = new ApexCharts(document.querySelector("#monthlyTrendsChart"), {
-        chart: {
-            type: 'area',
-            height: 350,
-            toolbar: { show: false }
-        },
-        series: [{
-            name: 'Monthly Costs',
-            data: {{ monthly_costs_data|safe }}
-        }],
-        xaxis: {
-            categories: {{ monthly_costs_labels|safe }},
-            type: 'datetime'
-        },
-        stroke: {
-            curve: 'smooth',
-            width: 2
-        },
-        fill: {
-            type: 'gradient',
-            gradient: {
-                shadeIntensity: 1,
-                opacityFrom: 0.7,
-                opacityTo: 0.3
+    console.log('DOM Content Loaded');
+    if (typeof ApexCharts === 'undefined') {
+        console.error('ApexCharts is not loaded!');
+        return;
+    }
+
+    // Only initialize charts if we're on the overview tab
+    {% if active_tab == 'overview' %}
+        try {
+            // Monthly Cost Trends - Area Chart
+            const monthlyTrendsChart = document.querySelector("#monthlyTrendsChart");
+            if (monthlyTrendsChart) {
+                const monthlyTrends = new ApexCharts(monthlyTrendsChart, {
+                    chart: {
+                        type: 'area',
+                        height: 350,
+                        toolbar: { show: false }
+                    },
+                    series: [{
+                        name: 'Monthly Costs',
+                        data: {{ monthly_costs_data|safe }}
+                    }],
+                    xaxis: {
+                        categories: {{ monthly_costs_labels|safe }},
+                        type: 'datetime'
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        width: 2
+                    },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.7,
+                            opacityTo: 0.3
+                        }
+                    },
+                    theme: {
+                        palette: 'palette1'
+                    }
+                });
+                monthlyTrends.render();
             }
-        },
-        theme: {
-            palette: 'palette1'
-        }
-    });
-    monthlyTrends.render();
 
-    // Resource Distribution - Donut Chart
-    const resourceDist = new ApexCharts(document.querySelector("#resourceDistChart"), {
-        chart: {
-            type: 'donut',
-            height: 350
-        },
-        series: {{ resource_dist_data|safe }},
-        labels: {{ resource_dist_labels|safe }},
-        theme: {
-            palette: 'palette2'
-        },
-        responsive: [{
-            breakpoint: 480,
-            options: {
-                chart: {
-                    width: 200
-                },
-                legend: {
-                    position: 'bottom'
-                }
+            // Resource Distribution - Donut Chart
+            const resourceDistChart = document.querySelector("#resourceDistChart");
+            if (resourceDistChart) {
+                const resourceDist = new ApexCharts(resourceDistChart, {
+                    chart: {
+                        type: 'donut',
+                        height: 350
+                    },
+                    series: {{ resource_dist_data|safe }},
+                    labels: {{ resource_dist_labels|safe }},
+                    theme: {
+                        palette: 'palette2'
+                    },
+                    responsive: [{
+                        breakpoint: 480,
+                        options: {
+                            chart: {
+                                width: 200
+                            },
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }]
+                });
+                resourceDist.render();
             }
-        }]
-    });
-    resourceDist.render();
 
-    // Server Usage - Bar Chart
-    const serverUsage = new ApexCharts(document.querySelector("#serverUsageChart"), {
-        chart: {
-            type: 'bar',
-            height: 350,
-            stacked: true,
-            toolbar: { show: false }
-        },
-        series: [{
-            name: 'CPU Usage',
-            data: {{ server_cpu_data|safe }}
-        }, {
-            name: 'Memory Usage',
-            data: {{ server_memory_data|safe }}
-        }],
-        xaxis: {
-            categories: {{ server_names|safe }}
-        },
-        plotOptions: {
-            bar: {
-                horizontal: false,
-                columnWidth: '55%',
-                endingShape: 'rounded'
-            },
-        },
-        theme: {
-            palette: 'palette3'
-        }
-    });
-    serverUsage.render();
+            // Server Usage - Bar Chart
+            const serverUsageChart = document.querySelector("#serverUsageChart");
+            if (serverUsageChart) {
+                const serverUsage = new ApexCharts(serverUsageChart, {
+                    chart: {
+                        type: 'bar',
+                        height: 350,
+                        stacked: true,
+                        toolbar: { show: false }
+                    },
+                    series: [{
+                        name: 'CPU Usage',
+                        data: {{ server_cpu_data|safe }}
+                    }, {
+                        name: 'Memory Usage',
+                        data: {{ server_memory_data|safe }}
+                    }],
+                    xaxis: {
+                        categories: {{ server_names|safe }}
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '55%',
+                            endingShape: 'rounded'
+                        },
+                    },
+                    theme: {
+                        palette: 'palette3'
+                    }
+                });
+                serverUsage.render();
+            }
 
-    // Project Growth - Line Chart
-    const projectGrowth = new ApexCharts(document.querySelector("#projectGrowthChart"), {
-        chart: {
-            type: 'line',
-            height: 350,
-            toolbar: { show: false }
-        },
-        series: [{
-            name: 'Active Projects',
-            data: {{ project_growth_data|safe }}
-        }],
-        xaxis: {
-            categories: {{ project_growth_labels|safe }},
-            type: 'datetime'
-        },
-        stroke: {
-            curve: 'smooth',
-            width: 3
-        },
-        markers: {
-            size: 4
-        },
-        theme: {
-            palette: 'palette4'
+            // Project Growth - Line Chart
+            const projectGrowthChart = document.querySelector("#projectGrowthChart");
+            if (projectGrowthChart) {
+                const projectGrowth = new ApexCharts(projectGrowthChart, {
+                    chart: {
+                        type: 'line',
+                        height: 350,
+                        toolbar: { show: false }
+                    },
+                    series: [{
+                        name: 'Active Projects',
+                        data: {{ project_growth_data|safe }}
+                    }],
+                    xaxis: {
+                        categories: {{ project_growth_labels|safe }},
+                        type: 'datetime'
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        width: 3
+                    },
+                    markers: {
+                        size: 4
+                    },
+                    theme: {
+                        palette: 'palette4'
+                    }
+                });
+                projectGrowth.render();
+            }
+        } catch (error) {
+            console.error('Error initializing charts:', error);
         }
-    });
-    projectGrowth.render();
+    {% endif %}
 });
 </script>
 {% endblock %}

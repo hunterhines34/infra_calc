@@ -22,6 +22,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 import xlsxwriter
 from io import BytesIO
+import logging
 
 # Create your views here.
 
@@ -497,11 +498,14 @@ def profile(request):
 
 @login_required
 def reports(request):
-    # Get date ranges - now using timezone-aware dates
-    end_date = timezone.now()
-    start_date = end_date - timedelta(days=180)  # Last 6 months
+    # Add debug logging
+    logger = logging.getLogger(__name__)
     
-    # Monthly costs data - using actual project costs
+    # Get date ranges
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=180)
+    
+    # Monthly costs data
     monthly_costs = Project.objects.filter(
         created_at__gte=start_date
     ).annotate(
@@ -509,7 +513,9 @@ def reports(request):
     ).values('month').annotate(
         total_cost=Sum('total_cost')
     ).order_by('month')
-
+    
+    logger.debug(f"Monthly costs data: {list(monthly_costs)}")  # Debug log
+    
     # Resource distribution - using actual configurations
     resource_dist = {
         'compute': ServerConfiguration.objects.filter(cpu__isnull=False).count(),
@@ -622,6 +628,14 @@ def reports(request):
             }
         ]
     }
+    
+    # Debug log the chart data
+    logger.debug(f"Chart data being passed to template:")
+    logger.debug(f"Monthly costs labels: {context['monthly_costs_labels']}")
+    logger.debug(f"Monthly costs data: {context['monthly_costs_data']}")
+    logger.debug(f"Resource distribution data: {context['resource_dist_data']}")
+    logger.debug(f"Server metrics data: {[s['name'] for s in server_metrics]}")
+    
     return render(request, 'projects/reports.html', context)
 
 def calculate_percentage_change(old_value, new_value):

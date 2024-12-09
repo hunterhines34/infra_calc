@@ -16,6 +16,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Add extra_css block here -->
+    {% block extra_css %}{% endblock %}
+    
     <script>
         tailwind.config = {
             theme: {
@@ -186,6 +189,9 @@
         </div>
     </div>
 
+    <!-- Add extra_js block before closing body tag -->
+    {% block extra_js %}{% endblock %}
+    
     <!-- Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </body>
