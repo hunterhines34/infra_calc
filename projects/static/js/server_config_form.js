@@ -38,6 +38,14 @@ function serverConfigForm() {
         },
 
         removeComponent(type, index) {
+            const typeMap = {
+                'storage': 'storage',
+                'rams': 'rams',
+                'gpus': 'gpus',
+                'network_cards': 'network_cards',
+                'licenses': 'licenses'
+            };
+            
             const arrayType = typeMap[type] || type;
             this.components[arrayType].splice(index, 1);
             this.calculateTotal();

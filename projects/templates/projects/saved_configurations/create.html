@@ -64,7 +64,7 @@
                 <h2 class="text-lg font-semibold text-gray-900">RAM Configuration</h2>
             </div>
             <div class="p-6 space-y-4">
-                <template x-for="(ram, index) in rams" :key="index">
+                <template x-for="(ram, index) in components.rams" :key="index">
                     <div class="flex items-center space-x-4">
                         <select :name="'ram[]'" required
                                 @change="updateCost('rams', index, $event.target.selectedOptions[0].dataset.price)"
@@ -101,7 +101,7 @@
                 <h2 class="text-lg font-semibold text-gray-900">Storage Configuration</h2>
             </div>
             <div class="p-6 space-y-4">
-                <template x-for="(storageItem, index) in storages" :key="index">
+                <template x-for="(storageItem, index) in components.storage" :key="index">
                     <div class="flex items-center space-x-4">
                         <select :name="'storage[]'" required
                                 x-model="storageItem.id"
@@ -139,7 +139,7 @@
                 <h2 class="text-lg font-semibold text-gray-900">GPU Configuration</h2>
             </div>
             <div class="p-6 space-y-4">
-                <template x-for="(gpu, index) in gpus" :key="index">
+                <template x-for="(gpu, index) in components.gpus" :key="index">
                     <div class="flex items-center space-x-4">
                         <select :name="'gpu[]'" required
                                 @change="updateCost('gpus', index, $event.target.selectedOptions[0].dataset.price)"
@@ -176,10 +176,10 @@
                 <h2 class="text-lg font-semibold text-gray-900">Network Card Configuration</h2>
             </div>
             <div class="p-6 space-y-4">
-                <template x-for="(card, index) in network" :key="index">
+                <template x-for="(card, index) in components.network_cards" :key="index">
                     <div class="flex items-center space-x-4">
                         <select :name="'network[]'" required
-                                @change="updateCost('network', index, $event.target.selectedOptions[0].dataset.price)"
+                                @change="updateCost('network_cards', index, $event.target.selectedOptions[0].dataset.price)"
                                 class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
                             <option value="">Select Network Card</option>
                             {% for card in network_cards %}
@@ -190,16 +190,16 @@
                         </select>
                         <input type="number" :name="'network_quantity[]'" 
                                x-model="card.quantity"
-                               @input="updateCost('network', index, $el.closest('.flex').querySelector('select').selectedOptions[0].dataset.price)"
+                               @input="updateCost('network_cards', index, $el.closest('.flex').querySelector('select').selectedOptions[0].dataset.price)"
                                min="1" 
                                class="w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                        <button type="button" @click="removeComponent('network', index)"
+                        <button type="button" @click="removeComponent('network_cards', index)"
                                 class="p-2 text-red-600 hover:text-red-700">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </template>
-                <button type="button" @click="addComponent('network')"
+                <button type="button" @click="addComponent('network_cards')"
                         class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                     <i class="fas fa-plus mr-2"></i>
                     Add Network Card
@@ -213,7 +213,7 @@
                 <h2 class="text-lg font-semibold text-gray-900">License Configuration</h2>
             </div>
             <div class="p-6 space-y-4">
-                <template x-for="(license, index) in licenses" :key="index">
+                <template x-for="(license, index) in components.licenses" :key="index">
                     <div class="flex items-center space-x-4">
                         <select :name="'license[]'" required
                                 @change="updateCost('licenses', index, $event.target.selectedOptions[0].dataset.price)"
@@ -270,42 +270,44 @@ document.addEventListener('alpine:init', () => {
 function serverConfigForm() {
     console.log('serverConfigForm called');
     return {
-        rams: [],
-        storages: [],
-        gpus: [],
-        network: [],
-        licenses: [],
+        components: {
+            rams: [],
+            storage: [],
+            gpus: [],
+            network_cards: [],
+            licenses: []
+        },
         
         init() {
             console.log('Component initialized');
-            this.rams = [];
-            this.storages = [];
-            this.gpus = [];
-            this.network = [];
-            this.licenses = [];
+            this.components.rams = [];
+            this.components.storage = [];
+            this.components.gpus = [];
+            this.components.network_cards = [];
+            this.components.licenses = [];
         },
         
         addComponent(type) {
             console.log('Adding component:', type);
-            if (type === 'storage') type = 'storages';
-            this[type].push({
+            if (type === 'storage') type = 'storage';
+            this.components[type].push({
                 id: '',
                 quantity: 1,
                 cost: 0
             });
-            console.log('Current state:', this[type]);
+            console.log('Current state:', this.components[type]);
         },
         
         removeComponent(type, index) {
-            if (type === 'storage') type = 'storages';
-            this[type].splice(index, 1);
+            if (type === 'storage') type = 'storage';
+            this.components[type].splice(index, 1);
         },
         
         updateCost(type, index, price) {
-            if (type === 'storage') type = 'storages';
+            if (type === 'storage') type = 'storage';
             if (price) {
-                const quantity = this[type][index].quantity || 1;
-                this[type][index].cost = quantity * parseFloat(price);
+                const quantity = this.components[type][index].quantity || 1;
+                this.components[type][index].cost = quantity * parseFloat(price);
             }
         }
     }
