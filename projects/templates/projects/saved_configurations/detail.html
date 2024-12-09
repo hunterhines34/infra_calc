@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% load humanize %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">{{ config.name }}</h1>
+                <p class="text-sm text-gray-500">Created {{ config.created_at|date:"M d, Y" }}</p>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'saved_config_edit' config.id %}" class="btn-secondary btn-sm">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <a href="{% url 'saved_config_delete' config.id %}" class="btn-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Summary -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Configuration Summary</h2>
+        </div>
+        
+        <!-- Component Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+            <!-- CPU -->
+            <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-medium text-gray-900">CPU</p>
+                        <p class="text-sm font-semibold text-gray-900">${{ config.server_configuration.cpu.price|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500 space-y-1">
+                        <p>{{ config.server_configuration.cpu.manufacturer.name }} {{ config.server_configuration.cpu.model_name }}</p>
+                        <p>{{ config.server_configuration.cpu.cores }} cores / {{ config.server_configuration.cpu.threads }} threads</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RAM -->
+            <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+                    <i class="fas fa-memory"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-medium text-gray-900">RAM</p>
+                        <p class="text-sm font-semibold text-gray-900">${{ config.server_configuration.calculate_ram_cost|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="mt-2 space-y-2">
+                        {% for ram in config.server_configuration.ram_configurations.all %}
+                            <div class="text-xs text-gray-500">
+                                <p>{{ ram.quantity }}x {{ ram.ram_model.capacity }}GB {{ ram.ram_model.memory_type }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storage -->
+            <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                <div class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-600 flex items-center justify-center">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-medium text-gray-900">Storage</p>
+                        <p class="text-sm font-semibold text-gray-900">${{ config.server_configuration.calculate_storage_cost|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="mt-2 space-y-2">
+                        {% for storage in config.server_configuration.storage_configurations.all %}
+                            <div class="text-xs text-gray-500">
+                                <p>{{ storage.quantity }}x {{ storage.storage_model.capacity }}GB {{ storage.storage_model.get_storage_type_display }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- GPU -->
+            <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <i class="fas fa-video"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-medium text-gray-900">GPU</p>
+                        <p class="text-sm font-semibold text-gray-900">${{ config.server_configuration.calculate_gpu_cost|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="mt-2 space-y-2">
+                        {% for gpu in config.server_configuration.gpu_configurations.all %}
+                            <div class="text-xs text-gray-500">
+                                <p>{{ gpu.quantity }}x {{ gpu.gpu_model.model_name }} ({{ gpu.gpu_model.memory_size }}GB)</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Cards -->
+            <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-medium text-gray-900">Network</p>
+                        <p class="text-sm font-semibold text-gray-900">${{ config.server_configuration.calculate_network_cost|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="mt-2 space-y-2">
+                        {% for nic in config.server_configuration.network_configurations.all %}
+                            <div class="text-xs text-gray-500">
+                                <p>{{ nic.quantity }}x {{ nic.network_card.model_name }} ({{ nic.network_card.speed }}Gbps)</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Licenses -->
+            <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
+                <div class="w-8 h-8 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center">
+                    <i class="fas fa-key"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                        <p class="text-sm font-medium text-gray-900">Licenses</p>
+                        <p class="text-sm font-semibold text-gray-900">${{ config.server_configuration.calculate_license_cost|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="mt-2 space-y-2">
+                        {% for license in config.server_configuration.license_configurations.all %}
+                            <div class="text-xs text-gray-500">
+                                <p>{{ license.quantity }}x {{ license.license.name }}</p>
+                                <p class="text-xs">{{ license.license.get_license_type_display }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Cost -->
+        <div class="border-t border-gray-200 p-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900">Total Cost</h2>
+                <p class="text-xl font-bold text-gray-900">${{ config.server_configuration.calculate_total_cost|floatformat:2|intcomma }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Specifications (Expandable) -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200" x-data="{ open: false, activeTab: 'cpu' }">
+        <button @click="open = !open" class="w-full p-4 text-left flex justify-between items-center">
+            <h2 class="text-lg font-semibold text-gray-900">Detailed Specifications</h2>
+            <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </button>
+        
+        <div x-show="open" x-cloak class="border-t border-gray-200">
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200">
+                <nav class="flex overflow-x-auto py-2 px-4 space-x-4">
+                    <button @click="activeTab = 'cpu'" 
+                            :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'cpu' }"
+                            class="px-3 py-2 text-sm font-medium text-gray-600 whitespace-nowrap">
+                        CPU
+                    </button>
+                    <button @click="activeTab = 'ram'"
+                            :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'ram' }"
+                            class="px-3 py-2 text-sm font-medium text-gray-600 whitespace-nowrap">
+                        RAM
+                    </button>
+                    <button @click="activeTab = 'storage'"
+                            :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'storage' }"
+                            class="px-3 py-2 text-sm font-medium text-gray-600 whitespace-nowrap">
+                        Storage
+                    </button>
+                    <button @click="activeTab = 'gpu'"
+                            :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'gpu' }"
+                            class="px-3 py-2 text-sm font-medium text-gray-600 whitespace-nowrap">
+                        GPU
+                    </button>
+                    <button @click="activeTab = 'network'"
+                            :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'network' }"
+                            class="px-3 py-2 text-sm font-medium text-gray-600 whitespace-nowrap">
+                        Network
+                    </button>
+                    <button @click="activeTab = 'license'"
+                            :class="{ 'text-blue-600 border-b-2 border-blue-600': activeTab === 'license' }"
+                            class="px-3 py-2 text-sm font-medium text-gray-600 whitespace-nowrap">
+                        Licenses
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-4">
+                <!-- CPU Tab -->
+                <div x-show="activeTab === 'cpu'" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium text-gray-900 mb-2">Basic Information</h4>
+                            <div class="space-y-1 text-sm">
+                                <p><span class="text-gray-500">Model:</span> {{ config.server_configuration.cpu.manufacturer.name }} {{ config.server_configuration.cpu.model_name }}</p>
+                                <p><span class="text-gray-500">Socket:</span> {{ config.server_configuration.cpu.socket }}</p>
+                                <p><span class="text-gray-500">Price:</span> ${{ config.server_configuration.cpu.price|floatformat:2|intcomma }}</p>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium text-gray-900 mb-2">Performance</h4>
+                            <div class="space-y-1 text-sm">
+                                <p><span class="text-gray-500">Cores/Threads:</span> {{ config.server_configuration.cpu.cores }}/{{ config.server_configuration.cpu.threads }}</p>
+                                <p><span class="text-gray-500">Base Clock:</span> {{ config.server_configuration.cpu.base_clock }} GHz</p>
+                                <p><span class="text-gray-500">Boost Clock:</span> {{ config.server_configuration.cpu.boost_clock }} GHz</p>
+                                <p><span class="text-gray-500">TDP:</span> {{ config.server_configuration.cpu.tdp }}W</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAM Tab -->
+                <div x-show="activeTab === 'ram'" class="space-y-4">
+                    {% for ram in config.server_configuration.ram_configurations.all %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Basic Information</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Model:</span> {{ ram.ram_model.manufacturer.name }} {{ ram.ram_model.model_name }}</p>
+                                    <p><span class="text-gray-500">Quantity:</span> {{ ram.quantity }}x</p>
+                                    <p><span class="text-gray-500">Price:</span> ${{ ram.calculate_cost|floatformat:2|intcomma }}</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Specifications</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Capacity:</span> {{ ram.ram_model.capacity }}GB</p>
+                                    <p><span class="text-gray-500">Type:</span> {{ ram.ram_model.memory_type }}</p>
+                                    <p><span class="text-gray-500">Speed:</span> {{ ram.ram_model.speed }} MHz</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Storage Tab -->
+                <div x-show="activeTab === 'storage'" class="space-y-4">
+                    {% for storage in config.server_configuration.storage_configurations.all %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Basic Information</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Model:</span> {{ storage.storage_model.manufacturer.name }} {{ storage.storage_model.model_name }}</p>
+                                    <p><span class="text-gray-500">Quantity:</span> {{ storage.quantity }}x</p>
+                                    <p><span class="text-gray-500">Price:</span> ${{ storage.calculate_cost|floatformat:2|intcomma }}</p>
+                                    <p><span class="text-gray-500">Type:</span> {{ storage.storage_model.get_storage_type_display }}</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Performance</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Capacity:</span> {{ storage.storage_model.capacity }}GB</p>
+                                    <p><span class="text-gray-500">Interface:</span> {{ storage.storage_model.interface }}</p>
+                                    <p><span class="text-gray-500">Read Speed:</span> {{ storage.storage_model.read_speed }} MB/s</p>
+                                    <p><span class="text-gray-500">Write Speed:</span> {{ storage.storage_model.write_speed }} MB/s</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- GPU Tab -->
+                <div x-show="activeTab === 'gpu'" class="space-y-4">
+                    {% for gpu in config.server_configuration.gpu_configurations.all %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Basic Information</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Model:</span> {{ gpu.gpu_model.manufacturer.name }} {{ gpu.gpu_model.model_name }}</p>
+                                    <p><span class="text-gray-500">Quantity:</span> {{ gpu.quantity }}x</p>
+                                    <p><span class="text-gray-500">Price:</span> ${{ gpu.calculate_cost|floatformat:2|intcomma }}</p>
+                                    <p><span class="text-gray-500">Memory:</span> {{ gpu.gpu_model.memory_size }}GB {{ gpu.gpu_model.memory_type }}</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Performance</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Base Clock:</span> {{ gpu.gpu_model.base_clock }} MHz</p>
+                                    <p><span class="text-gray-500">Boost Clock:</span> {{ gpu.gpu_model.boost_clock }} MHz</p>
+                                    <p><span class="text-gray-500">TDP:</span> {{ gpu.gpu_model.tdp }}W</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Network Tab -->
+                <div x-show="activeTab === 'network'" class="space-y-4">
+                    {% for nic in config.server_configuration.network_configurations.all %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Basic Information</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Model:</span> {{ nic.network_card.manufacturer.name }} {{ nic.network_card.model_name }}</p>
+                                    <p><span class="text-gray-500">Quantity:</span> {{ nic.quantity }}x</p>
+                                    <p><span class="text-gray-500">Price:</span> ${{ nic.calculate_cost|floatformat:2|intcomma }}</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Specifications</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Speed:</span> {{ nic.network_card.speed }} Gbps</p>
+                                    <p><span class="text-gray-500">Ports:</span> {{ nic.network_card.ports }}</p>
+                                    <p><span class="text-gray-500">PCIe Version:</span> {{ nic.network_card.pcie_version }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- License Tab -->
+                <div x-show="activeTab === 'license'" class="space-y-4">
+                    {% for license in config.server_configuration.license_configurations.all %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Basic Information</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Name:</span> {{ license.license.name }}</p>
+                                    <p><span class="text-gray-500">Manufacturer:</span> {{ license.license.manufacturer.name }}</p>
+                                    <p><span class="text-gray-500">Quantity:</span> {{ license.quantity }}x</p>
+                                    <p><span class="text-gray-500">Price:</span> ${{ license.calculate_cost|floatformat:2|intcomma }}</p>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">License Details</h4>
+                                <div class="space-y-1 text-sm">
+                                    <p><span class="text-gray-500">Type:</span> {{ license.license.get_license_type_display }}</p>
+                                    {% if license.license.is_subscription %}
+                                        <p><span class="text-gray-500">Period:</span> {{ license.license.subscription_period }} months</p>
+                                    {% endif %}
+                                    <p><span class="text-gray-500">Description:</span> {{ license.license.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

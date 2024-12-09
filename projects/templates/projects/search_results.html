@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% load humanize %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Search Results</h1>
+                <p class="mt-1 text-sm text-gray-500">
+                    {% if query %}
+                        Results for "{{ query }}"
+                    {% else %}
+                        Enter a search term above
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% if query %}
+        <!-- Projects Results -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Projects ({{ projects|length }})</h2>
+            </div>
+            
+            <div class="divide-y divide-gray-200">
+                {% for project in projects %}
+                    <a href="{% url 'project_detail' project.id %}" class="block hover:bg-gray-50 transition-colors duration-150">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                                        <i class="fas fa-folder"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ project.name }}</p>
+                                        <p class="text-sm text-gray-500">Created {{ project.created_at|date:"M d, Y" }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="px-3 py-1 text-xs font-medium rounded-full 
+                                        {% if project.status == 'APPROVED' %}bg-green-100 text-green-800
+                                        {% elif project.status == 'PENDING_APPROVAL' %}bg-yellow-100 text-yellow-800
+                                        {% elif project.status == 'REJECTED' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ project.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="p-6 text-center text-gray-500">No matching projects found</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Saved Configurations Results -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Saved Configurations ({{ configurations|length }})</h2>
+            </div>
+            
+            <div class="divide-y divide-gray-200">
+                {% for config in configurations %}
+                    <a href="{% url 'saved_config_detail' config.id %}" class="block hover:bg-gray-50 transition-colors duration-150">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                                        <i class="fas fa-save"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ config.name }}</p>
+                                        <p class="text-sm text-gray-500">Last modified {{ config.created_at|date:"M d, Y" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="p-6 text-center text-gray-500">No matching configurations found</div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

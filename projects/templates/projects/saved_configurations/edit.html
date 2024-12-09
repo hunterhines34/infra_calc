@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% load humanize %}
+
+{% block content %}
+<div x-data="serverConfigForm()">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Edit Configuration</h1>
+                <p class="mt-1 text-sm text-gray-500">Modify your server configuration</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Form -->
+    <form method="POST" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Basic Information</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Configuration Name</label>
+                    <input type="text" name="name" id="name" required
+                           value="{{ config.name }}"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea name="description" id="description" rows="3"
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">{{ config.description }}</textarea>
+                </div>
+                <div>
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="is_template" 
+                               {% if config.is_template %}checked{% endif %}
+                               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <span class="ml-2 text-sm text-gray-700">Save as template</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- CPU Selection -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">CPU Configuration</h2>
+            </div>
+            <div class="p-6">
+                <select name="cpu" required
+                        @change="updateCost('cpu', 0, $event.target.selectedOptions[0].dataset.price)"
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                    <option value="">Select a CPU</option>
+                    {% for cpu in cpus %}
+                        <option value="{{ cpu.id }}" 
+                                data-price="{{ cpu.price }}"
+                                {% if config.server_configuration.cpu.id == cpu.id %}selected{% endif %}>
+                            {{ cpu }} - ${{ cpu.price }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- RAM Configuration -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">RAM Configuration</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <template x-for="(ram, index) in rams" :key="index">
+                    <div class="flex items-center space-x-4">
+                        <select :name="'ram[]'" required
+                                @change="updateCost('rams', index, $event.target.selectedOptions[0].dataset.price)"
+                                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            <option value="">Select RAM</option>
+                            {% for ram_model in rams %}
+                                <option value="{{ ram_model.id }}" 
+                                        data-price="{{ ram_model.price }}"
+                                        :selected="'{{ ram_model.id }}' === ram.id">
+                                    {{ ram_model }} - ${{ ram_model.price }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <input type="number" :name="'ram_quantity[]'" 
+                               :value="ram.quantity"
+                               x-model="ram.quantity"
+                               @input="updateCost('rams', index, $el.closest('.flex').querySelector('select').selectedOptions[0].dataset.price)"
+                               min="1" 
+                               class="w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <button type="button" @click="removeComponent('rams', index)"
+                                class="p-2 text-red-600 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </template>
+                <button type="button" @click="addComponent('rams')"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add RAM
+                </button>
+            </div>
+        </div>
+
+        <!-- Storage Configuration -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Storage Configuration</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <template x-for="(storage, index) in storages" :key="index">
+                    <div class="flex items-center space-x-4">
+                        <select :name="'storage[]'" required
+                                @change="updateCost('storages', index, $event.target.selectedOptions[0].dataset.price)"
+                                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            <option value="">Select Storage</option>
+                            {% for storage_model in storages %}
+                                <option value="{{ storage_model.id }}" 
+                                        data-price="{{ storage_model.price }}"
+                                        :selected="'{{ storage_model.id }}' === storage.id">
+                                    {{ storage_model }} - ${{ storage_model.price }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <input type="number" :name="'storage_quantity[]'" 
+                               :value="storage.quantity"
+                               x-model="storage.quantity"
+                               @input="updateCost('storages', index, $el.closest('.flex').querySelector('select').selectedOptions[0].dataset.price)"
+                               min="1" 
+                               class="w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <button type="button" @click="removeComponent('storages', index)"
+                                class="p-2 text-red-600 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </template>
+                <button type="button" @click="addComponent('storages')"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Storage
+                </button>
+            </div>
+        </div>
+
+        <!-- GPU Configuration -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">GPU Configuration</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <template x-for="(gpu, index) in gpus" :key="index">
+                    <div class="flex items-center space-x-4">
+                        <select :name="'gpu[]'" required
+                                @change="updateCost('gpus', index, $event.target.selectedOptions[0].dataset.price)"
+                                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            <option value="">Select GPU</option>
+                            {% for gpu_model in gpus %}
+                                <option value="{{ gpu_model.id }}" 
+                                        data-price="{{ gpu_model.price }}"
+                                        :selected="'{{ gpu_model.id }}' === gpu.id">
+                                    {{ gpu_model }} - ${{ gpu_model.price }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <input type="number" :name="'gpu_quantity[]'" 
+                               :value="gpu.quantity"
+                               x-model="gpu.quantity"
+                               @input="updateCost('gpus', index, $el.closest('.flex').querySelector('select').selectedOptions[0].dataset.price)"
+                               min="1" 
+                               class="w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <button type="button" @click="removeComponent('gpus', index)"
+                                class="p-2 text-red-600 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </template>
+                <button type="button" @click="addComponent('gpus')"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add GPU
+                </button>
+            </div>
+        </div>
+
+        <!-- Network Card Configuration -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Network Card Configuration</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <template x-for="(card, index) in network" :key="index">
+                    <div class="flex items-center space-x-4">
+                        <select :name="'network[]'" required
+                                @change="updateCost('network', index, $event.target.selectedOptions[0].dataset.price)"
+                                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            <option value="">Select Network Card</option>
+                            {% for network_card in network_cards %}
+                                <option value="{{ network_card.id }}" 
+                                        data-price="{{ network_card.price }}"
+                                        :selected="'{{ network_card.id }}' === card.id.toString()">
+                                    {{ network_card }} - ${{ network_card.price }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <input type="number" :name="'network_quantity[]'" 
+                               :value="card.quantity"
+                               x-model="card.quantity"
+                               @input="updateCost('network', index, $el.closest('.flex').querySelector('select').selectedOptions[0].dataset.price)"
+                               min="1" 
+                               class="w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <button type="button" @click="removeComponent('network', index)"
+                                class="p-2 text-red-600 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </template>
+                <button type="button" @click="addComponent('network')"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Network Card
+                </button>
+            </div>
+        </div>
+
+        <!-- License Configuration -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">License Configuration</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <template x-for="(license, index) in licenses" :key="index">
+                    <div class="flex items-center space-x-4">
+                        <select :name="'license[]'" required
+                                @change="updateCost('licenses', index, $event.target.selectedOptions[0].dataset.price)"
+                                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            <option value="">Select License</option>
+                            {% for license_model in licenses %}
+                                <option value="{{ license_model.id }}" 
+                                        data-price="{{ license_model.price }}"
+                                        :selected="'{{ license_model.id }}' === license.id">
+                                    {{ license_model }} - ${{ license_model.price }}
+                                    {% if license_model.is_subscription %}(Subscription){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <input type="number" :name="'license_quantity[]'" 
+                               :value="license.quantity"
+                               x-model="license.quantity"
+                               @input="updateCost('licenses', index, $el.closest('.flex').querySelector('select').selectedOptions[0].dataset.price)"
+                               min="1" 
+                               class="w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <button type="button" @click="removeComponent('licenses', index)"
+                                class="p-2 text-red-600 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </template>
+                <button type="button" @click="addComponent('licenses')"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add License
+                </button>
+            </div>
+        </div>
+
+        <!-- Total Cost Display -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Total Configuration Cost</h2>
+                    <p class="text-xl font-bold text-gray-900" x-text="'$' + totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-4">
+            <a href="{% url 'saved_config_list' %}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                Cancel
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                <i class="fas fa-save mr-2"></i>
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+function serverConfigForm() {
+    return {
+        rams: [],
+        storages: [],
+        gpus: [],
+        network: [],
+        licenses: [],
+        totalCost: 0,
+        
+        init() {
+            // Initialize with existing configurations
+            {% if config.server_configuration %}
+                {% for ram in config.server_configuration.ram_configurations.all %}
+                    this.rams.push({
+                        id: '{{ ram.ram_model.id }}',
+                        quantity: {{ ram.quantity }},
+                        cost: {{ ram.calculate_cost }}
+                    });
+                {% endfor %}
+
+                {% for storage in config.server_configuration.storage_configurations.all %}
+                    this.storages.push({
+                        id: '{{ storage.storage_model.id }}',
+                        quantity: {{ storage.quantity }},
+                        cost: {{ storage.calculate_cost }}
+                    });
+                {% endfor %}
+
+                {% for gpu in config.server_configuration.gpu_configurations.all %}
+                    this.gpus.push({
+                        id: '{{ gpu.gpu_model.id }}',
+                        quantity: {{ gpu.quantity }},
+                        cost: {{ gpu.calculate_cost }}
+                    });
+                {% endfor %}
+
+                {% for nic in config.server_configuration.network_configurations.all %}
+                    this.network.push({
+                        id: '{{ nic.network_card.id }}',
+                        quantity: {{ nic.quantity }},
+                        cost: {{ nic.calculate_cost }}
+                    });
+                {% endfor %}
+
+                {% for license in config.server_configuration.license_configurations.all %}
+                    this.licenses.push({
+                        id: '{{ license.license.id }}',
+                        quantity: {{ license.quantity }},
+                        cost: {{ license.calculate_cost }}
+                    });
+                {% endfor %}
+            {% endif %}
+            
+            this.calculateTotal();
+        },
+        
+        addComponent(type) {
+            this[type].push({
+                id: '',
+                quantity: 1,
+                cost: 0
+            });
+        },
+        
+        removeComponent(type, index) {
+            this[type].splice(index, 1);
+            this.calculateTotal();
+        },
+        
+        updateCost(type, index, price) {
+            if (price) {
+                const quantity = this[type][index].quantity || 1;
+                this[type][index].cost = quantity * parseFloat(price);
+                this.calculateTotal();
+            }
+        },
+
+        calculateTotal() {
+            let total = 0;
+            
+            // Add CPU cost
+            const cpuSelect = document.querySelector('select[name="cpu"]');
+            if (cpuSelect && cpuSelect.selectedOptions[0]) {
+                total += parseFloat(cpuSelect.selectedOptions[0].dataset.price || 0);
+            }
+            
+            // Add all component costs
+            ['rams', 'storages', 'gpus', 'network', 'licenses'].forEach(type => {
+                this[type].forEach(item => {
+                    total += parseFloat(item.cost || 0);
+                });
+            });
+            
+            this.totalCost = total;
+        }
+    }
+}
+</script>
+{% endblock %}
+{% endblock %} 

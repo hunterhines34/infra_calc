@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% load humanize %}
+
+{% block extra_css %}
+<style>
+    .chart-card {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        border: 1px solid #e5e7eb;
+        padding: 1.5rem;
+    }
+    .chart-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+                <p class="mt-1 text-sm text-gray-500">Analyze infrastructure metrics and trends</p>
+            </div>
+            <div class="flex space-x-4">
+                <button class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <i class="fas fa-download mr-2"></i>
+                    Export Data
+                </button>
+                <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <i class="fas fa-sync mr-2"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="border-b border-gray-200">
+        <nav class="flex space-x-8" aria-label="Reports">
+            {% for tab in tabs %}
+            <a href="?tab={{ tab.id }}" 
+               class="{% if active_tab == tab.id %}border-primary-500 text-primary-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                {{ tab.name }}
+            </a>
+            {% endfor %}
+        </nav>
+    </div>
+
+    <!-- Tab Content -->
+    {% if active_tab == 'overview' %}
+        <!-- Overview content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Monthly Cost Trends (Area Chart) -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Monthly Cost Trends</h3>
+                    <div id="monthlyTrendsChart" class="h-80"></div>
+                </div>
+            </div>
+
+            <!-- Resource Distribution (Donut Chart) -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Resource Distribution</h3>
+                    <div id="resourceDistChart" class="h-80"></div>
+                </div>
+            </div>
+
+            <!-- Server Usage (Bar Chart) -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Server Usage</h3>
+                    <div id="serverUsageChart" class="h-80"></div>
+                </div>
+            </div>
+
+            <!-- Project Growth (Line Chart) -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Project Growth</h3>
+                    <div id="projectGrowthChart" class="h-80"></div>
+                </div>
+            </div>
+        </div>
+    {% elif active_tab == 'cost_analysis' %}
+        <!-- Cost Analysis content -->
+        <div class="space-y-8">
+            <!-- Add cost analysis specific content -->
+        </div>
+    {% elif active_tab == 'usage_metrics' %}
+        <!-- Usage Metrics content -->
+        <div class="space-y-8">
+            <!-- Add usage metrics specific content -->
+        </div>
+    {% elif active_tab == 'performance' %}
+        <!-- Performance content -->
+        <div class="space-y-8">
+            <!-- Add performance specific content -->
+        </div>
+    {% endif %}
+
+    <!-- Key Metrics Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Key Metrics</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Previous</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for metric in key_metrics %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ metric.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ metric.current|floatformat:2|intcomma }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ metric.previous }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if metric.change >= 0 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if metric.change >= 0 %}+{% endif %}{{ metric.change }}%
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Cost Trends - Area Chart
+    const monthlyTrends = new ApexCharts(document.querySelector("#monthlyTrendsChart"), {
+        chart: {
+            type: 'area',
+            height: 350,
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'Monthly Costs',
+            data: {{ monthly_costs_data|safe }}
+        }],
+        xaxis: {
+            categories: {{ monthly_costs_labels|safe }},
+            type: 'datetime'
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.7,
+                opacityTo: 0.3
+            }
+        },
+        theme: {
+            palette: 'palette1'
+        }
+    });
+    monthlyTrends.render();
+
+    // Resource Distribution - Donut Chart
+    const resourceDist = new ApexCharts(document.querySelector("#resourceDistChart"), {
+        chart: {
+            type: 'donut',
+            height: 350
+        },
+        series: {{ resource_dist_data|safe }},
+        labels: {{ resource_dist_labels|safe }},
+        theme: {
+            palette: 'palette2'
+        },
+        responsive: [{
+            breakpoint: 480,
+            options: {
+                chart: {
+                    width: 200
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }]
+    });
+    resourceDist.render();
+
+    // Server Usage - Bar Chart
+    const serverUsage = new ApexCharts(document.querySelector("#serverUsageChart"), {
+        chart: {
+            type: 'bar',
+            height: 350,
+            stacked: true,
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'CPU Usage',
+            data: {{ server_cpu_data|safe }}
+        }, {
+            name: 'Memory Usage',
+            data: {{ server_memory_data|safe }}
+        }],
+        xaxis: {
+            categories: {{ server_names|safe }}
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                columnWidth: '55%',
+                endingShape: 'rounded'
+            },
+        },
+        theme: {
+            palette: 'palette3'
+        }
+    });
+    serverUsage.render();
+
+    // Project Growth - Line Chart
+    const projectGrowth = new ApexCharts(document.querySelector("#projectGrowthChart"), {
+        chart: {
+            type: 'line',
+            height: 350,
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'Active Projects',
+            data: {{ project_growth_data|safe }}
+        }],
+        xaxis: {
+            categories: {{ project_growth_labels|safe }},
+            type: 'datetime'
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        markers: {
+            size: 4
+        },
+        theme: {
+            palette: 'palette4'
+        }
+    });
+    projectGrowth.render();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('projects/', views.project_list, name='project_list'),
+    path('projects/create/', views.project_create, name='project_create'),
+    path('projects/<int:pk>/', views.project_detail, name='project_detail'),
+    path('projects/<int:pk>/submit/', views.project_submit, name='project_submit'),
+    path('projects/<int:project_id>/server/create/', views.server_create, name='server_create'),
+    path('projects/<int:project_id>/server/<int:server_id>/', views.server_detail, name='server_detail'),
+    path('saved-configs/', views.saved_configs, name='saved_configs'),
+    path('saved-configs/<int:pk>/', views.saved_config_detail, name='saved_config_detail'),
+    path('projects/<int:project_id>/servers/<int:server_id>/edit/', views.server_edit, name='server_edit'),
+    path('projects/<int:project_id>/servers/<int:server_id>/delete/', views.server_delete, name='server_delete'),
+    path('projects/<int:project_id>/revert-to-draft/', views.project_revert_to_draft, name='project_revert_to_draft'),
+    path('reports/', views.reports, name='reports'),
+    path('search/', views.search, name='search'),
+    path('saved-configurations/', views.saved_config_list, name='saved_config_list'),
+    path('saved-configurations/create/', views.saved_config_create, name='saved_config_create'),
+    path('saved-configurations/<int:pk>/', views.saved_config_detail, name='saved_config_detail'),
+    path('saved-configurations/<int:pk>/edit/', views.saved_config_edit, name='saved_config_edit'),
+    path('saved-configurations/<int:pk>/delete/', views.saved_config_delete, name='saved_config_delete'),
+    path('projects/<int:project_id>/configurations/create/', views.saved_config_create, name='project_config_create'),
+    path('approvals/', views.approvals_dashboard, name='approvals_dashboard'),
+    path('projects/<int:project_id>/approve/', views.project_approve, name='project_approve'),
+    path('projects/<int:project_id>/reject/', views.project_reject, name='project_reject'),
+    path('projects/<int:pk>/delete/', views.project_delete, name='project_delete'),
+    path('projects/<int:project_id>/load-config/', views.load_saved_config, name='load_saved_config'),
+    path('projects/<int:pk>/export-pdf/', views.export_project_pdf, name='export_project_pdf'),
+    path('projects/<int:pk>/export-excel/', views.export_project_excel, name='export_project_excel'),
+]

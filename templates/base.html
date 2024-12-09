@@ -1,0 +1,192 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Infrastructure Calculator{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        },
+                        secondary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{% static 'js/server_config_form.js' %}"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex">
+        <!-- Sidebar - Only show if authenticated -->
+        {% if user.is_authenticated %}
+            <aside class="w-64 bg-white border-r border-gray-200 hidden lg:block">
+                <div class="h-full flex flex-col">
+                    <div class="px-6 py-5 border-b border-gray-200">
+                        <a href="{% url 'index' %}" class="block">
+                            <h1 class="text-primary font-bold text-gray-900">Infrastructure Calculator</h1>
+                        </a>
+                    </div>
+                    
+                    <nav class="flex-1 px-4 py-4 space-y-1">
+                        <a href="{% url 'index' %}" class="flex items-center px-4 py-2 text-sm font-medium rounded-lg {% if request.path == '/' %}bg-primary-50 text-primary-700{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                            <i class="fas fa-home w-5 h-5 mr-3"></i>
+                            Dashboard
+                        </a>
+                        <a href="{% url 'project_list' %}" class="flex items-center px-4 py-2 text-sm font-medium rounded-lg {% if 'projects' in request.path %}bg-primary-50 text-primary-700{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                            <i class="fas fa-project-diagram w-5 h-5 mr-3"></i>
+                            Projects
+                        </a>
+                        <a href="{% url 'saved_config_list' %}" class="flex items-center px-4 py-2 text-sm font-medium rounded-lg {% if 'saved-configurations' in request.path %}bg-primary-50 text-primary-700{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                            <i class="fas fa-save w-5 h-5 mr-3"></i>
+                            Saved Configurations
+                        </a>
+                        <a href="{% url 'approvals_dashboard' %}" class="flex items-center px-4 py-2 text-sm font-medium rounded-lg {% if 'approvals' in request.path %}bg-primary-50 text-primary-700{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                            <i class="fas fa-check-circle w-5 h-5 mr-3"></i>
+                            Approvals Dashboard
+                        </a>
+                        <a href="{% url 'reports' %}" class="flex items-center px-4 py-2 text-sm font-medium rounded-lg {% if 'reports' in request.path %}bg-primary-50 text-primary-700{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                            <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
+                            Reports
+                        </a>
+                        
+                    </nav>
+                </div>
+            </aside>
+        {% endif %}
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col">
+            <!-- Top Navigation - Only show if authenticated -->
+            {% if user.is_authenticated %}
+                <header class="bg-white border-b border-gray-200">
+                    <div class="px-8">
+                        <div class="flex items-center justify-between h-16">
+                            <!-- Mobile menu button - Updated padding and alignment -->
+                            <button type="button" class="lg:hidden -ml-2 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100">
+                                <i class="fas fa-bars"></i>
+                            </button>
+
+                            <!-- Search - Updated to have consistent spacing -->
+                            <div class="flex-1 max-w-lg ml-0 lg:ml-0">
+                                <form action="{% url 'search' %}" method="GET" class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-search text-gray-400"></i>
+                                    </div>
+                                    <input type="search" 
+                                           name="q" 
+                                           value="{{ request.GET.q }}"
+                                           class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm" 
+                                           placeholder="Search projects and configurations...">
+                                </form>
+                            </div>
+
+                            <!-- User Menu -->
+                            <div class="ml-4 flex items-center">
+                                {% if user.is_authenticated %}
+                                    <div class="relative" x-data="{ open: false }">
+                                        <button @click="open = !open" @click.away="open = false" type="button" class="flex items-center max-w-xs focus:outline-none">
+                                            <div class="h-8 w-8 rounded bg-primary-500 flex items-center justify-center text-white font-medium">
+                                                {{ user.first_name|default:user.username|make_list|first|upper }}
+                                            </div>
+                                        </button>
+                                        
+                                        <!-- Dropdown menu -->
+                                        <div x-show="open" 
+                                             x-transition:enter="transition ease-out duration-100"
+                                             x-transition:enter-start="transform opacity-0 scale-95"
+                                             x-transition:enter-end="transform opacity-100 scale-100"
+                                             x-transition:leave="transition ease-in duration-75"
+                                             x-transition:leave-start="transform opacity-100 scale-100"
+                                             x-transition:leave-end="transform opacity-0 scale-95"
+                                             class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none"
+                                             style="display: none;">
+                                            <div class="px-4 py-2">
+                                                <p class="text-sm text-gray-500 truncate">{{ user.first_name }} {{ user.last_name }}</p>
+                                            </div>
+                                            <div class="py-1">
+                                                {% if user.is_staff or user.is_superuser %}
+                                                    <a href="{% url 'admin:index' %}" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                        <i class="fas fa-tools mr-3 text-gray-400 group-hover:text-gray-500"></i>
+                                                        Admin Panel
+                                                    </a>
+                                                {% endif %}
+                                                <a href="{% url 'profile' %}" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                    <i class="fas fa-user mr-3 text-gray-400 group-hover:text-gray-500"></i>
+                                                    Profile
+                                                </a>
+                                            </div>
+                                            <div class="py-1">
+                                                <a href="{% url 'logout' %}" class="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                                    <i class="fas fa-sign-out-alt mr-3 text-gray-400 group-hover:text-gray-500"></i>
+                                                    Sign out
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'login' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+                                        Sign in
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            {% endif %}
+
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto bg-gray-50">
+                <div class="py-6">
+                    <div class="px-8">
+                        {% if messages %}
+                            <div class="messages">
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} mb-4">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        {% block content %}{% endblock %}
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</body>
+</html>

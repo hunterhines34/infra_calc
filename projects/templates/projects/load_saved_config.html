@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Load Saved Configuration</h1>
+                <p class="mt-1 text-sm text-gray-500">Select a configuration to add to your project</p>
+            </div>
+            <a href="{% url 'project_detail' project.id %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Project
+            </a>
+        </div>
+    </div>
+
+    <!-- Saved Configurations List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        {% if saved_configs %}
+            <div class="divide-y divide-gray-200">
+                {% for config in saved_configs %}
+                    <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">{{ config.name }}</h3>
+                                <p class="mt-1 text-sm text-gray-500">{{ config.description }}</p>
+                                <p class="mt-2 text-sm text-gray-500">Created {{ config.created_at|date:"M d, Y" }}</p>
+                            </div>
+                            <form method="post" class="ml-4">
+                                {% csrf_token %}
+                                <input type="hidden" name="config_id" value="{{ config.id }}">
+                                <button type="submit" 
+                                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Add to Project
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="p-6 text-center">
+                <div class="mx-auto w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4">
+                    <i class="fas fa-folder-open text-gray-400 text-xl"></i>
+                </div>
+                <h3 class="text-sm font-medium text-gray-900">No saved configurations</h3>
+                <p class="mt-1 text-sm text-gray-500">Create a saved configuration to use it in your projects.</p>
+                <div class="mt-6">
+                    <a href="{% url 'saved_config_create' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150">
+                        <i class="fas fa-plus mr-2"></i>
+                        Create Configuration
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

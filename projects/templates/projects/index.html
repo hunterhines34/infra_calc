@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+
+{% load humanize %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+                <p class="mt-1 text-sm text-gray-500">Track and manage your infrastructure costs efficiently</p>
+            </div>
+            <a href="{% url 'project_create' %}" 
+               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150">
+                <i class="fas fa-plus mr-2"></i>
+                New Project
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Projects -->
+        <a href="{% url 'project_list' %}" class="block group">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all duration-200 ease-in-out hover:shadow-md hover:border-primary-200 hover:-translate-y-0.5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors duration-200">
+                        <i class="fas fa-project-diagram text-xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Projects</p>
+                        <h3 class="mt-1 text-xl font-semibold text-gray-900">{{ total_projects }}</h3>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm {% if project_growth >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    <i class="fas fa-{% if project_growth >= 0 %}chart-line{% else %}chart-down{% endif %} mr-1.5"></i>
+                    <span>{% if project_growth >= 0 %}+{% endif %}{{ project_growth }}% from last month</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Active Servers -->
+        <a href="{% url 'project_list' %}" class="block group">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all duration-200 ease-in-out hover:shadow-md hover:border-primary-200 hover:-translate-y-0.5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 rounded-lg bg-green-50 group-hover:bg-green-100 transition-colors duration-200">
+                        <i class="fas fa-server text-xl text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Servers</p>
+                        <h3 class="mt-1 text-xl font-semibold text-gray-900">{{ total_servers }}</h3>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm text-green-600">
+                    <i class="fas fa-check-circle mr-1.5"></i>
+                    <span>Total Recorded Servers</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Pending Approvals -->
+        <a href="{% url 'approvals_dashboard' %}" class="block group">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all duration-200 ease-in-out hover:shadow-md hover:border-primary-200 hover:-translate-y-0.5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 rounded-lg bg-yellow-50 group-hover:bg-yellow-100 transition-colors duration-200">
+                        <i class="fas fa-clock text-xl text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Pending Approval</p>
+                        <h3 class="mt-1 text-xl font-semibold text-gray-900">{{ pending_approvals }}</h3>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm text-yellow-600">
+                    <i class="fas fa-hourglass-half mr-1.5"></i>
+                    <span>Awaiting review</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Saved Configurations -->
+        <a href="{% url 'saved_config_list' %}" class="block group">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 transition-all duration-200 ease-in-out hover:shadow-md hover:border-primary-200 hover:-translate-y-0.5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 rounded-lg bg-purple-50 group-hover:bg-purple-100 transition-colors duration-200">
+                        <i class="fas fa-save text-xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Configurations</p>
+                        <h3 class="mt-1 text-xl font-semibold text-gray-900">{{ total_saved_configs }}</h3>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm text-purple-600">
+                    <i class="fas fa-sync mr-1.5"></i>
+                    <span>Total Saved Configurations</span>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="space-y-8">
+        <!-- Recent Projects -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <form method="get" class="flex items-center space-x-4">
+                <!-- Time Frame Filter -->
+                <div class="flex items-center space-x-2">
+                    <label for="time_frame" class="text-sm font-medium text-gray-700">Time Frame:</label>
+                    <select name="time_frame" id="time_frame" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" onchange="this.form.submit()">
+                        <option value="all" {% if time_frame == 'all' %}selected{% endif %}>All Time</option>
+                        <option value="week" {% if time_frame == 'week' %}selected{% endif %}>Last Week</option>
+                        <option value="month" {% if time_frame == 'month' %}selected{% endif %}>Last Month</option>
+                        <option value="quarter" {% if time_frame == 'quarter' %}selected{% endif %}>Last Quarter</option>
+                        <option value="year" {% if time_frame == 'year' %}selected{% endif %}>Last Year</option>
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="flex items-center space-x-2">
+                    <label for="status" class="text-sm font-medium text-gray-700">Status:</label>
+                    <select name="status" id="status" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" onchange="this.form.submit()">
+                        <option value="all" {% if status == 'all' %}selected{% endif %}>All Status</option>
+                        <option value="DRAFT" {% if status == 'DRAFT' %}selected{% endif %}>Draft</option>
+                        <option value="PENDING_APPROVAL" {% if status == 'PENDING_APPROVAL' %}selected{% endif %}>Pending Approval</option>
+                        <option value="APPROVED" {% if status == 'APPROVED' %}selected{% endif %}>Approved</option>
+                        <option value="REJECTED" {% if status == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+
+                <!-- Configuration Type Filter -->
+                <div class="flex items-center space-x-2">
+                    <label for="config_type" class="text-sm font-medium text-gray-700">Config Type:</label>
+                    <select name="config_type" id="config_type" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" onchange="this.form.submit()">
+                        <option value="all" {% if config_type == 'all' %}selected{% endif %}>All Types</option>
+                        <option value="standard" {% if config_type == 'standard' %}selected{% endif %}>Standard</option>
+                        <option value="template" {% if config_type == 'template' %}selected{% endif %}>Template</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">Recent Projects</h2>
+                    <a href="{% url 'project_list' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">
+                        View all
+                        <i class="fas fa-arrow-right ml-1.5"></i>
+                    </a>
+                </div>
+            </div>
+
+            {% if recent_projects %}
+                <div class="divide-y divide-gray-200">
+                    {% for project in recent_projects %}
+                        <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                                        {% with status=project.status %}
+                                        <i class="fas {% if status == 'DRAFT' %}fa-pencil-alt{% elif status == 'PENDING_APPROVAL' %}fa-clock{% elif status == 'APPROVED' %}fa-check{% elif status == 'REJECTED' %}fa-times{% else %}fa-flag-checkered{% endif %}"></i>
+                                        {% endwith %}
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{% url 'project_detail' project.id %}" class="text-sm font-medium text-gray-900 hover:text-primary-600">
+                                                {{ project.name }}
+                                            </a>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                {% if project.status == 'DRAFT' %}bg-gray-100 text-gray-800
+                                                {% elif project.status == 'PENDING_APPROVAL' %}bg-yellow-100 text-yellow-800
+                                                {% elif project.status == 'APPROVED' %}bg-green-100 text-green-800
+                                                {% elif project.status == 'REJECTED' %}bg-red-100 text-red-800
+                                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                                {{ project.get_status_display }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                                            <span>Created {{ project.created_at|date:"M d, Y" }}</span>
+                                            <span>•</span>
+                                            <span>by {{ project.created_by.get_full_name|default:project.created_by.username }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-right">
+                                        <p class="text-sm font-semibold text-gray-900">${{ project.total_cost|floatformat:2|intcomma }}</p>
+                                        <p class="text-xs text-gray-500">{{ project.servers.count }} server{{ project.servers.count|pluralize }}</p>
+                                    </div>
+                                    {% if request.user.is_staff %}
+                                        <div class="flex space-x-2">
+                                            <a href="{% url 'project_detail' project.id %}" 
+                                               class="p-1 text-gray-400 hover:text-primary-600 transition-colors duration-150">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="post" action="{% url 'project_delete' project.pk %}" class="inline" onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.');">
+                                                {% csrf_token %}
+                                                <button type="submit" 
+                                                        class="p-1 text-gray-400 hover:text-red-600 transition-colors duration-150">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-6 text-center">
+                    <div class="mx-auto w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4">
+                        <i class="fas fa-folder-open text-gray-400 text-xl"></i>
+                    </div>
+                    {% if status != 'all' or time_frame != 'all' or config_type != 'all' %}
+                        <h3 class="text-sm font-medium text-gray-900">No projects match the selected filters</h3>
+                        <p class="mt-1 text-sm text-gray-500">Try adjusting your filters to see more results</p>
+                    {% else %}
+                        <h3 class="text-sm font-medium text-gray-900">No projects yet</h3>
+                        <p class="mt-1 text-sm text-gray-500">Get started by creating your first project</p>
+                        <div class="mt-4">
+                            <a href="{% url 'project_create' %}" 
+                               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create First Project
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Saved Configurations -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">Saved Configurations</h2>
+                    <a href="{% url 'saved_config_create' %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">
+                        <i class="fas fa-plus mr-1.5"></i>
+                        New Configuration
+                    </a>
+                </div>
+            </div>
+
+            {% if saved_configs %}
+                <div class="divide-y divide-gray-200">
+                    {% for config in saved_configs %}
+                        <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-lg {% if config.is_template %}bg-purple-50{% else %}bg-primary-50{% endif %} {% if config.is_template %}text-purple-600{% else %}text-primary-600{% endif %} flex items-center justify-center">
+                                        <i class="fas {% if config.is_template %}fa-puzzle-piece{% else %}fa-save{% endif %}"></i>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{% url 'saved_config_detail' config.id %}" class="text-sm font-medium text-gray-900 hover:text-primary-600">
+                                                {{ config.name }}
+                                            </a>
+                                            {% if config.is_template %}
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                                Template
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex items-center space-x-2 text-xs text-gray-500">
+                                            <span>Created {{ config.created_at|date:"M d, Y" }}</span>
+                                            <span>•</span>
+                                            <span>by {{ config.created_by.get_full_name|default:config.created_by.username }}</span>
+                                            <span>•</span>
+                                            <span>${{ config.server_configuration.calculate_total_cost|floatformat:2|intcomma }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-right text-xs text-gray-500">
+                                        <!-- CPU -->
+                                        <div class="flex items-center gap-1">
+                                            <i class="fas fa-microchip text-primary-500"></i>
+                                            <span>{{ config.server_configuration.cpu.manufacturer.name }} {{ config.server_configuration.cpu.model_name }}</span>
+                                            <span class="text-gray-400">({{ config.server_configuration.cpu.cores }}C/{{ config.server_configuration.cpu.threads }}T)</span>
+                                        </div>
+                                        
+                                        <!-- RAM -->
+                                        <div class="flex items-center gap-1">
+                                            <i class="fas fa-memory text-green-500"></i>
+                                            {% with ram_configs=config.server_configuration.ram_configurations.all %}
+                                            <span>
+                                                {% for ram in ram_configs %}
+                                                    {% if not forloop.first %} + {% endif %}
+                                                    {{ ram.quantity }}x{{ ram.ram_model.capacity }}GB {{ ram.ram_model.memory_type }}
+                                                {% endfor %}
+                                            </span>
+                                            {% endwith %}
+                                        </div>
+                                        
+                                        <!-- Storage -->
+                                        <div class="flex items-center gap-1">
+                                            <i class="fas fa-hdd text-blue-500"></i>
+                                            {% with storage_configs=config.server_configuration.storage_configurations.all %}
+                                            <span>
+                                                {% for storage in storage_configs %}
+                                                    {% if not forloop.first %} + {% endif %}
+                                                    {{ storage.quantity }}x{{ storage.storage_model.capacity }}GB {{ storage.storage_model.get_storage_type_display }}
+                                                {% endfor %}
+                                            </span>
+                                            {% endwith %}
+                                        </div>
+                                        
+                                        <!-- GPU (if any) -->
+                                        {% with gpu_configs=config.server_configuration.gpu_configurations.all %}
+                                        {% if gpu_configs %}
+                                        <div class="flex items-center gap-1">
+                                            <i class="fas fa-tv text-purple-500"></i>
+                                            <span>
+                                                {% for gpu in gpu_configs %}
+                                                    {% if not forloop.first %} + {% endif %}
+                                                    {{ gpu.quantity }}x{{ gpu.gpu_model.model_name }}
+                                                {% endfor %}
+                                            </span>
+                                        </div>
+                                        {% endif %}
+                                        {% endwith %}
+                                        
+                                        <!-- Network Cards -->
+                                        {% with network_configs=config.server_configuration.network_configurations.all %}
+                                        {% if network_configs %}
+                                        <div class="flex items-center gap-1">
+                                            <i class="fas fa-network-wired text-yellow-500"></i>
+                                            <span>
+                                                {% for net in network_configs %}
+                                                    {% if not forloop.first %} + {% endif %}
+                                                    {{ net.quantity }}x{{ net.network_card.speed }}Gbps
+                                                {% endfor %}
+                                            </span>
+                                        </div>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <a href="{% url 'saved_config_edit' config.id %}" 
+                                           class="p-1 text-gray-400 hover:text-primary-600 transition-colors duration-150">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'saved_config_delete' config.id %}" 
+                                           class="p-1 text-gray-400 hover:text-red-600 transition-colors duration-150">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="p-6 text-center">
+                    <div class="mx-auto w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4">
+                        <i class="fas fa-save text-gray-400 text-xl"></i>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-900">No saved configurations</h3>
+                    <p class="mt-1 text-sm text-gray-500">Save your first configuration to get started</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(name, url) {
+    if (confirm(`Are you sure you want to delete "${name}"?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

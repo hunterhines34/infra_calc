@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ server.name }}</h1>
+                <p class="mt-1 text-sm text-gray-500">Part of project: {{ project.name }}</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'project_detail' project.id %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-150">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Project
+                </a>
+                <a href="{% url 'server_edit' project.id server.id %}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150">
+                    <i class="fas fa-edit mr-2"></i>
+                    Edit Server
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Details -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Info -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Server Configuration</h2>
+                <div class="space-y-6">
+                    {% if server.description %}
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500">Description</h3>
+                        <p class="mt-1 text-gray-900">{{ server.description }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- CPU Configuration -->
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-base font-medium text-gray-900 mb-3">CPU Configuration</h3>
+                        {% if server.cpu %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-500">Model</h4>
+                                <p class="mt-1 text-gray-900">{{ server.cpu.model_name }}</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-500">Cores</h4>
+                                <p class="mt-1 text-gray-900">{{ server.cpu.cores }} cores</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-500">Threads</h4>
+                                <p class="mt-1 text-gray-900">{{ server.cpu.threads }} threads</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-500">Base Clock</h4>
+                                <p class="mt-1 text-gray-900">{{ server.cpu.base_clock }}GHz</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-500">Boost Clock</h4>
+                                <p class="mt-1 text-gray-900">{{ server.cpu.boost_clock }}GHz</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-500">TDP</h4>
+                                <p class="mt-1 text-gray-900">{{ server.cpu.tdp }}W</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-500">Socket</h4>
+                                <p class="mt-1 text-gray-900">{{ server.cpu.socket }}</p>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-500">Cost</h4>
+                                <p class="mt-1 text-gray-900">${{ server.cpu.price|floatformat:2|intcomma }}</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500">No CPU configured</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- RAM Configuration -->
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-base font-medium text-gray-900 mb-3">RAM Configuration</h3>
+                        {% with ram_configs=server.ram_configurations.all %}
+                        {% if ram_configs %}
+                        <div class="space-y-4">
+                            {% for config in ram_configs %}
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Model</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.ram_model.model_name }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Capacity</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.ram_model.capacity }}GB</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Type</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.ram_model.memory_type }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Speed</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.ram_model.speed }}MHz</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Quantity</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.quantity }}x</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Cost per Unit</h4>
+                                        <p class="mt-1 text-gray-900">${{ config.ram_model.price|floatformat:2|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500">No RAM configurations</p>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+
+                    <!-- Storage Configuration -->
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-base font-medium text-gray-900 mb-3">Storage Configuration</h3>
+                        {% with storage_configs=server.storage_configurations.all %}
+                        {% if storage_configs %}
+                        <div class="space-y-4">
+                            {% for config in storage_configs %}
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Model</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.storage_model.model_name }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Capacity</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.storage_model.capacity }}GB</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Type</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.storage_model.storage_type }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Interface</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.storage_model.interface }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Quantity</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.quantity }}x</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Cost per Unit</h4>
+                                        <p class="mt-1 text-gray-900">${{ config.storage_model.price|floatformat:2|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500">No storage configurations</p>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+
+                    <!-- GPU Configuration -->
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-base font-medium text-gray-900 mb-3">GPU Configuration</h3>
+                        {% with gpu_configs=server.gpu_configurations.all %}
+                        {% if gpu_configs %}
+                        <div class="space-y-4">
+                            {% for config in gpu_configs %}
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Model</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.gpu_model.model_name }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Memory</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.gpu_model.memory_size }}GB</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Memory Type</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.gpu_model.memory_type }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Base Clock</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.gpu_model.base_clock }}MHz</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Boost Clock</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.gpu_model.boost_clock }}MHz</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">TDP</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.gpu_model.tdp }}W</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Quantity</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.quantity }}x</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Cost per Unit</h4>
+                                        <p class="mt-1 text-gray-900">${{ config.gpu_model.price|floatformat:2|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500">No GPU configurations</p>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+
+                    <!-- Network Configuration -->
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-base font-medium text-gray-900 mb-3">Network Configuration</h3>
+                        {% with network_configs=server.network_configurations.all %}
+                        {% if network_configs %}
+                        <div class="space-y-4">
+                            {% for config in network_configs %}
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Model</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.network_card.model_name }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Speed</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.network_card.speed }}Gbps</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Ports</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.network_card.ports }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Quantity</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.quantity }}x</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Cost per Unit</h4>
+                                        <p class="mt-1 text-gray-900">${{ config.network_card.price|floatformat:2|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500">No network configurations</p>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+
+                    <!-- License Configuration -->
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-base font-medium text-gray-900 mb-3">License Configuration</h3>
+                        {% with license_configs=server.license_configurations.all %}
+                        {% if license_configs %}
+                        <div class="space-y-4">
+                            {% for config in license_configs %}
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Name</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.license.name }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Type</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.license.license_type }}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Quantity</h4>
+                                        <p class="mt-1 text-gray-900">{{ config.quantity }}x</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-500">Cost per Unit</h4>
+                                        <p class="mt-1 text-gray-900">${{ config.license.price|floatformat:2|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-sm text-gray-500">No license configurations</p>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Summary -->
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Cost Summary</h2>
+                <div class="text-3xl font-bold text-gray-900">
+                    ${{ server.calculate_total_cost|floatformat:2|intcomma }}
+                    <span class="text-sm font-normal text-gray-500">USD</span>
+                </div>
+                <div class="mt-6 space-y-4">
+                    {% if server.cpu %}
+                    <div class="flex justify-between items-center py-2 border-t border-gray-100">
+                        <span class="text-sm text-gray-500">CPU Cost</span>
+                        <span class="text-sm font-medium text-gray-900">${{ server.cpu.price|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% with ram_total=server.calculate_ram_cost %}
+                    {% if ram_total %}
+                    <div class="flex justify-between items-center py-2 border-t border-gray-100">
+                        <span class="text-sm text-gray-500">RAM Cost</span>
+                        <span class="text-sm font-medium text-gray-900">${{ ram_total|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    {% with storage_total=server.calculate_storage_cost %}
+                    {% if storage_total %}
+                    <div class="flex justify-between items-center py-2 border-t border-gray-100">
+                        <span class="text-sm text-gray-500">Storage Cost</span>
+                        <span class="text-sm font-medium text-gray-900">${{ storage_total|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    {% with gpu_total=server.calculate_gpu_cost %}
+                    {% if gpu_total %}
+                    <div class="flex justify-between items-center py-2 border-t border-gray-100">
+                        <span class="text-sm text-gray-500">GPU Cost</span>
+                        <span class="text-sm font-medium text-gray-900">${{ gpu_total|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    {% with network_total=server.calculate_network_cost %}
+                    {% if network_total %}
+                    <div class="flex justify-between items-center py-2 border-t border-gray-100">
+                        <span class="text-sm text-gray-500">Network Cost</span>
+                        <span class="text-sm font-medium text-gray-900">${{ network_total|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    {% with license_total=server.calculate_license_cost %}
+                    {% if license_total %}
+                    <div class="flex justify-between items-center py-2 border-t border-gray-100">
+                        <span class="text-sm text-gray-500">License Cost</span>
+                        <span class="text-sm font-medium text-gray-900">${{ license_total|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

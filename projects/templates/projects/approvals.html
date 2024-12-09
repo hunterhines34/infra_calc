@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Project Approvals</h1>
+                <p class="mt-1 text-sm text-gray-500">Review and manage project approval requests</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <form method="get" class="flex items-center space-x-4">
+            <!-- Time Frame Filter -->
+            <div class="flex items-center space-x-2">
+                <label for="time_frame" class="text-sm font-medium text-gray-700">Time Frame:</label>
+                <select name="time_frame" id="time_frame" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" onchange="this.form.submit()">
+                    <option value="all" {% if time_frame == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="week" {% if time_frame == 'week' %}selected{% endif %}>Last Week</option>
+                    <option value="month" {% if time_frame == 'month' %}selected{% endif %}>Last Month</option>
+                    <option value="quarter" {% if time_frame == 'quarter' %}selected{% endif %}>Last Quarter</option>
+                    <option value="year" {% if time_frame == 'year' %}selected{% endif %}>Last Year</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="flex items-center space-x-2">
+                <label for="status" class="text-sm font-medium text-gray-700">Status:</label>
+                <select name="status" id="status" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm" onchange="this.form.submit()">
+                    <option value="all" {% if status == 'all' %}selected{% endif %}>All Status</option>
+                    <option value="DRAFT" {% if status == 'DRAFT' %}selected{% endif %}>Draft</option>
+                    <option value="PENDING_APPROVAL" {% if status == 'PENDING_APPROVAL' %}selected{% endif %}>Pending Approval</option>
+                    <option value="APPROVED" {% if status == 'APPROVED' %}selected{% endif %}>Approved</option>
+                    <option value="REJECTED" {% if status == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Pending Approvals -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 p-3 rounded-lg bg-yellow-50">
+                    <i class="fas fa-clock text-xl text-yellow-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Pending Approval</p>
+                    <h3 class="mt-1 text-xl font-semibold text-gray-900">{{ pending_count }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approved Today -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 p-3 rounded-lg bg-green-50">
+                    <i class="fas fa-check-circle text-xl text-green-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Approved Today</p>
+                    <h3 class="mt-1 text-xl font-semibold text-gray-900">{{ approved_today }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Processed -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 p-3 rounded-lg bg-blue-50">
+                    <i class="fas fa-tasks text-xl text-blue-600"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Processed</p>
+                    <h3 class="mt-1 text-xl font-semibold text-gray-900">{{ total_processed }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Approvals List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Pending Approvals</h2>
+        </div>
+
+        {% if pending_projects %}
+            <div class="divide-y divide-gray-200">
+                {% for project in pending_projects %}
+                    <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                                    <i class="fas fa-folder"></i>
+                                </div>
+                                <div>
+                                    <a href="{% url 'project_detail' project.id %}" class="text-sm font-medium text-gray-900 hover:text-primary-600">
+                                        {{ project.name }}
+                                    </a>
+                                    <p class="text-sm text-gray-500">Submitted by {{ project.created_by.get_full_name }} on {{ project.created_at|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <form method="post" action="{% url 'project_approve' project.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-150">
+                                        <i class="fas fa-check mr-2"></i>
+                                        Approve
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'project_reject' project.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150">
+                                        <i class="fas fa-times mr-2"></i>
+                                        Reject
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'project_revert_to_draft' project.id %}" class="inline" onsubmit="return confirm('Are you sure you want to revert this project back to draft?');">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-150">
+                                        <i class="fas fa-undo mr-2"></i>
+                                        Revert to Draft
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-sm">
+                            <p class="text-gray-500">{{ project.description }}</p>
+                            <p class="mt-2 font-semibold text-gray-900">${{ project.total_cost|floatformat:2|intcomma }} estimated cost</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="p-6 text-center">
+                <div class="mx-auto w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4">
+                    <i class="fas fa-check-circle text-gray-400 text-xl"></i>
+                </div>
+                <h3 class="text-sm font-medium text-gray-900">No pending approvals</h3>
+                <p class="mt-1 text-sm text-gray-500">All projects have been reviewed</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
