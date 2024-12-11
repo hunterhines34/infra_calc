@@ -28,13 +28,18 @@ import logging
 
 @login_required
 def index(request):
+    if request.user.is_staff:
+        projects = Project.objects.all()
+    else:
+        projects = Project.objects.filter(created_by=request.user)
+    
     # Get filter parameters
     time_frame = request.GET.get('time_frame', 'all')
     status = request.GET.get('status', 'all')
     config_type = request.GET.get('config_type', 'all')
     
     # Base queries
-    projects_query = Project.objects.filter(created_by=request.user)
+    projects_query = projects
     configs_query = SavedConfiguration.objects.filter(created_by=request.user)
     
     # Apply time frame filter
@@ -92,13 +97,18 @@ def index(request):
 
 @login_required
 def project_list(request):
+    if request.user.is_staff:
+        projects = Project.objects.all()
+    else:
+        projects = Project.objects.filter(created_by=request.user)
+    
     # Get filter parameters
     time_frame = request.GET.get('time_frame', 'all')
     status = request.GET.get('status', 'all')
     config_type = request.GET.get('config_type', 'all')
     
     # Base query
-    projects_query = Project.objects.filter(created_by=request.user)
+    projects_query = projects
     
     # Apply time frame filter
     if time_frame != 'all':
@@ -137,7 +147,10 @@ def project_list(request):
 
 @login_required
 def project_detail(request, pk):
-    project = get_object_or_404(Project, pk=pk, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=pk)
+    else:
+        project = get_object_or_404(Project, pk=pk, created_by=request.user)
     
     # Force recalculation of total cost
     total = Decimal('0.00')
@@ -175,7 +188,10 @@ def project_create(request):
 
 @login_required
 def project_submit(request, pk):
-    project = get_object_or_404(Project, pk=pk, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=pk)
+    else:
+        project = get_object_or_404(Project, pk=pk, created_by=request.user)
     
     if project.status == 'DRAFT':
         project.status = 'PENDING_APPROVAL'
@@ -196,17 +212,26 @@ def project_submit(request, pk):
 
 @login_required
 def saved_configs(request):
-    configs = SavedConfiguration.objects.filter(created_by=request.user).order_by('-created_at')
+    if request.user.is_staff:
+        configs = SavedConfiguration.objects.all()
+    else:
+        configs = SavedConfiguration.objects.filter(created_by=request.user)
     return render(request, 'projects/saved_configs.html', {'configs': configs})
 
 @login_required
 def saved_config_detail(request, pk):
-    config = get_object_or_404(SavedConfiguration, pk=pk, created_by=request.user)
+    if request.user.is_staff:
+        config = get_object_or_404(SavedConfiguration, pk=pk)
+    else:
+        config = get_object_or_404(SavedConfiguration, pk=pk, created_by=request.user)
     return render(request, 'projects/saved_config_detail.html', {'config': config})
 
 @login_required
 def server_create(request, project_id):
-    project = get_object_or_404(Project, pk=project_id, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=project_id)
+    else:
+        project = get_object_or_404(Project, pk=project_id, created_by=request.user)
     
     if request.method == 'POST':
         form = ServerConfigurationForm(request.POST)
@@ -288,7 +313,10 @@ def server_create(request, project_id):
 
 @login_required
 def server_detail(request, project_id, server_id):
-    project = get_object_or_404(Project, pk=project_id, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=project_id)
+    else:
+        project = get_object_or_404(Project, pk=project_id, created_by=request.user)
     server = get_object_or_404(ServerConfiguration, pk=server_id, project=project)
     return render(request, 'projects/server_detail.html', {
         'project': project,
@@ -297,7 +325,10 @@ def server_detail(request, project_id, server_id):
 
 @login_required
 def server_edit(request, project_id, server_id):
-    project = get_object_or_404(Project, pk=project_id, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=project_id)
+    else:
+        project = get_object_or_404(Project, pk=project_id, created_by=request.user)
     server = get_object_or_404(ServerConfiguration, pk=server_id, project=project)
     
     if request.method == 'POST':
@@ -395,7 +426,10 @@ def server_edit(request, project_id, server_id):
 
 @login_required
 def server_delete(request, project_id, server_id):
-    project = get_object_or_404(Project, pk=project_id, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=project_id)
+    else:
+        project = get_object_or_404(Project, pk=project_id, created_by=request.user)
     server = get_object_or_404(ServerConfiguration, pk=server_id, project=project)
     
     if request.method == 'POST':
@@ -416,7 +450,10 @@ def server_delete(request, project_id, server_id):
 
 @login_required
 def project_revert_to_draft(request, project_id):
-    project = get_object_or_404(Project, id=project_id)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=project_id)
+    else:
+        project = get_object_or_404(Project, pk=project_id, created_by=request.user)
     
     if request.method == 'POST':
         if project.status == 'PENDING_APPROVAL':
@@ -435,7 +472,10 @@ def profile(request):
     status = request.GET.get('status', 'all')
     
     # Base queries
-    projects_query = Project.objects.filter(created_by=request.user)
+    if request.user.is_staff:
+        projects_query = Project.objects.all()
+    else:
+        projects_query = Project.objects.filter(created_by=request.user)
     
     # Apply time frame filter
     if time_frame != 'all':
@@ -672,28 +712,36 @@ def search(request):
     }
     
     if query:
+        if request.user.is_staff:
+            projects = Project.objects.all()
+            configs = SavedConfiguration.objects.all()
+        else:
+            projects = Project.objects.filter(created_by=request.user)
+            configs = SavedConfiguration.objects.filter(created_by=request.user)
+        
         # Search in projects
-        projects = Project.objects.filter(
-            Q(created_by=request.user) &
-            (Q(name__icontains=query) | 
-             Q(description__icontains=query))
+        projects = projects.filter(
+            Q(name__icontains=query) | 
+            Q(description__icontains=query)
         ).order_by('-created_at')
         
         # Search in saved configurations
-        configurations = SavedConfiguration.objects.filter(
-            Q(created_by=request.user) &
-            (Q(name__icontains=query) | 
-             Q(description__icontains=query))
+        configs = configs.filter(
+            Q(name__icontains=query) | 
+            Q(description__icontains=query)
         ).order_by('-created_at')
         
         results['projects'] = projects
-        results['configurations'] = configurations
+        results['configurations'] = configs
     
     return render(request, 'projects/search_results.html', results)
 
 @login_required
 def saved_config_list(request):
-    configs = SavedConfiguration.objects.filter(created_by=request.user).order_by('-created_at')
+    if request.user.is_staff:
+        configs = SavedConfiguration.objects.all()
+    else:
+        configs = SavedConfiguration.objects.filter(created_by=request.user)
     return render(request, 'projects/saved_configurations/list.html', {
         'configs': configs
     })
@@ -795,14 +843,20 @@ def saved_config_create(request):
 
 @login_required
 def saved_config_detail(request, pk):
-    config = get_object_or_404(SavedConfiguration, pk=pk, created_by=request.user)
+    if request.user.is_staff:
+        config = get_object_or_404(SavedConfiguration, pk=pk)
+    else:
+        config = get_object_or_404(SavedConfiguration, pk=pk, created_by=request.user)
     return render(request, 'projects/saved_configurations/detail.html', {
         'config': config
     })
 
 @login_required
 def saved_config_edit(request, pk):
-    config = get_object_or_404(SavedConfiguration, pk=pk, created_by=request.user)
+    if request.user.is_staff:
+        config = get_object_or_404(SavedConfig, pk=pk)
+    else:
+        config = get_object_or_404(SavedConfig, pk=pk, created_by=request.user)
     server_config = config.server_configuration
 
     if request.method == 'POST':
@@ -854,7 +908,10 @@ def saved_config_edit(request, pk):
 
 @login_required
 def saved_config_delete(request, pk):
-    config = get_object_or_404(SavedConfiguration, pk=pk, created_by=request.user)
+    if request.user.is_staff:
+        config = get_object_or_404(SavedConfig, pk=pk)
+    else:
+        config = get_object_or_404(SavedConfig, pk=pk, created_by=request.user)
     if request.method == 'POST':
         config.delete()
         messages.success(request, 'Configuration deleted successfully!')
@@ -870,7 +927,10 @@ def approvals_dashboard(request):
     status = request.GET.get('status', 'all')
     
     # Base query for all projects
-    projects_query = Project.objects.all().order_by('-created_at')
+    if request.user.is_staff:
+        projects_query = Project.objects.all().order_by('-created_at')
+    else:
+        projects_query = Project.objects.filter(created_by=request.user).order_by('-created_at')
     
     # Apply time frame filter
     if time_frame != 'all':
@@ -920,7 +980,10 @@ def approvals_dashboard(request):
 @login_required
 def project_approve(request, project_id):
     if request.method == 'POST':
-        project = get_object_or_404(Project, id=project_id)
+        if request.user.is_staff:
+            project = get_object_or_404(Project, id=project_id)
+        else:
+            project = get_object_or_404(Project, id=project_id, created_by=request.user)
         project.status = 'APPROVED'
         project.approved_by = request.user
         project.approved_at = timezone.now()
@@ -939,7 +1002,10 @@ def project_approve(request, project_id):
 @login_required
 def project_reject(request, project_id):
     if request.method == 'POST':
-        project = get_object_or_404(Project, id=project_id)
+        if request.user.is_staff:
+            project = get_object_or_404(Project, id=project_id)
+        else:
+            project = get_object_or_404(Project, id=project_id, created_by=request.user)
         project.status = 'REJECTED'
         project.save()
         
@@ -975,7 +1041,10 @@ def project_delete(request, pk):
 
 @login_required
 def load_saved_config(request, project_id):
-    project = get_object_or_404(Project, pk=project_id, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=project_id)
+    else:
+        project = get_object_or_404(Project, pk=project_id, created_by=request.user)
     
     if request.method == 'POST':
         config_id = request.POST.get('config_id')
@@ -1000,7 +1069,10 @@ def load_saved_config(request, project_id):
             return redirect('project_detail', pk=project.id)
     
     # Get all saved configurations for the user
-    saved_configs = SavedConfiguration.objects.filter(created_by=request.user)
+    if request.user.is_staff:
+        saved_configs = SavedConfiguration.objects.all()
+    else:
+        saved_configs = SavedConfiguration.objects.filter(created_by=request.user)
     
     return render(request, 'projects/load_saved_config.html', {
         'project': project,
@@ -1009,7 +1081,10 @@ def load_saved_config(request, project_id):
 
 @login_required
 def export_project_pdf(request, pk):
-    project = get_object_or_404(Project, pk=pk, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=pk)
+    else:
+        project = get_object_or_404(Project, pk=pk, created_by=request.user)
     
     # Create the HttpResponse object with PDF headers
     buffer = BytesIO()
@@ -1179,7 +1254,10 @@ def export_project_pdf(request, pk):
 
 @login_required
 def export_project_excel(request, pk):
-    project = get_object_or_404(Project, pk=pk, created_by=request.user)
+    if request.user.is_staff:
+        project = get_object_or_404(Project, pk=pk)
+    else:
+        project = get_object_or_404(Project, pk=pk, created_by=request.user)
     
     output = BytesIO()
     workbook = xlsxwriter.Workbook(output)
